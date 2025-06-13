@@ -123,12 +123,17 @@ def search_documents(query: str, top_k: int = 10, similarity_threshold: float = 
             query_texts=[query],
             n_results=top_k
         )
-        
-        # Convert to expected format
+          # Convert to expected format
         formatted_results = []
         if results['documents'] and results['documents'][0]:
             for i, doc in enumerate(results['documents'][0]):
-                similarity = 1.0 - results['distances'][0][i] if results['distances'] and results['distances'][0] else 0.0
+                distance = results['distances'][0][i] if results['distances'] and results['distances'][0] else 2.0
+                # ChromaDB mit Cosine-Distanz: Distance = 1 - Cosine_Similarity
+                # Also: Similarity = 1 - Distance, aber nur für gültige Cosine-Distances (0-2)
+                if distance <= 2.0:  # Gültige Cosine-Distance
+                    similarity = max(0.0, 1.0 - distance)
+                else:  # Fallback für andere Distance-Metriken
+                    similarity = 1.0 / (1.0 + distance)
                 
                 if similarity >= similarity_threshold:
                     formatted_results.append({
