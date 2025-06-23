@@ -85,18 +85,31 @@ def check_database():
     
     try:
         import chromadb
-        client = chromadb.PersistentClient(path="./chroma_db")
-        collection = client.get_collection("dnoti_gutachten")
+        # Prüfe zuerst den korrekten Pfad
+        client = chromadb.PersistentClient(path="./data/vectordb")
+        collection = client.get_collection("legal_documents")
         doc_count = collection.count()
         
         if doc_count > 0:
-            print(f"{Colors.GREEN}✅ Database ready: {doc_count:,} documents{Colors.END}")
+            print(f"{Colors.GREEN}✅ Database ready: {doc_count:,} documents in 'legal_documents' collection{Colors.END}")
             return True
         else:
             print(f"{Colors.YELLOW}⚠️  Database empty - loading documents...{Colors.END}")
             return setup_database()
             
     except Exception as e:
+        # Fallback: Prüfe alten Pfad
+        try:
+            client = chromadb.PersistentClient(path="./chroma_db")
+            collection = client.get_collection("dnoti_gutachten")
+            doc_count = collection.count()
+            
+            if doc_count > 0:
+                print(f"{Colors.GREEN}✅ Database ready: {doc_count:,} documents in 'dnoti_gutachten' collection{Colors.END}")
+                return True
+        except:
+            pass
+            
         print(f"{Colors.YELLOW}⚠️  Database not found - creating new database...{Colors.END}")
         return setup_database()
 

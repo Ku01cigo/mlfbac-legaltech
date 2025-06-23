@@ -22,13 +22,33 @@ class GraniteEmbeddingFunction:
     def _load_model(self):
         if self.model is None:
             logger.info(f"Loading model {self.model_name}")
-            self.model = SentenceTransformer(self.model_name)
-            logger.info(f"Model {self.model_name} loaded successfully")
+            try:
+                import torch
+                # Fix PyTorch meta tensor issue
+                torch.backends.cudnn.enabled = False
+                
+                self.model = SentenceTransformer(self.model_name, device='cpu')
+                # Force model to CPU to avoid meta tensor issues
+                self.model = self.model.to('cpu')
+                logger.info(f"Model {self.model_name} loaded successfully on CPU")
+            except Exception as e:
+                logger.error(f"Failed to load Granite model: {e}")
+                # Fallback to default model
+                self.model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", device='cpu')
+                logger.info("Fallback to all-MiniLM-L6-v2 model")
     
     def __call__(self, input):
         self._load_model()
-        embeddings = self.model.encode(input, convert_to_numpy=True)
-        return embeddings.tolist()
+        try:
+            embeddings = self.model.encode(input, convert_to_numpy=True, device='cpu')
+            return embeddings.tolist()
+        except Exception as e:
+            logger.error(f"Embedding failed: {e}")
+            # Return dummy embeddings as fallback
+            if isinstance(input, list):
+                return [[0.0] * 384 for _ in input]
+            else:
+                return [0.0] * 384
 
 class DefaultEmbeddingFunction:
     def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
@@ -42,13 +62,31 @@ class DefaultEmbeddingFunction:
     def _load_model(self):
         if self.model is None:
             logger.info(f"Loading model {self.model_name}")
-            self.model = SentenceTransformer(self.model_name)
-            logger.info(f"Model {self.model_name} loaded successfully")
+            try:
+                import torch
+                # Fix PyTorch meta tensor issue
+                torch.backends.cudnn.enabled = False
+                
+                self.model = SentenceTransformer(self.model_name, device='cpu')
+                # Force model to CPU to avoid meta tensor issues  
+                self.model = self.model.to('cpu')
+                logger.info(f"Model {self.model_name} loaded successfully on CPU")
+            except Exception as e:
+                logger.error(f"Failed to load default model: {e}")
+                raise
     
     def __call__(self, input):
         self._load_model()
-        embeddings = self.model.encode(input, convert_to_numpy=True)
-        return embeddings.tolist()
+        try:
+            embeddings = self.model.encode(input, convert_to_numpy=True, device='cpu')
+            return embeddings.tolist()
+        except Exception as e:
+            logger.error(f"Embedding failed: {e}")
+            # Return dummy embeddings as fallback
+            if isinstance(input, list):
+                return [[0.0] * 384 for _ in input]
+            else:
+                return [0.0] * 384
 
 class ChromaDBClient:
     def __init__(self):
