@@ -187,3 +187,25 @@ Thumbs.db
 # ChromaDB specific
 chroma_db/
 .chroma/
+
+# Project-specific files to ignore
+# Test and debugging files
+inspect_chroma.py
+debug_*.py
+test_*.py
+quick_test.py
+*_test.py
+
+# Backup and temporary files
+streamlit_app_backup*.py
+streamlit_app_clean.py
+streamlit_app_fixed.py
+*_backup*.py
+
+# Test data and requests
+test_request.json
+sample_*.json
+
+# Temporary analysis files
+analyze_*.py
+cleanup_*.py
